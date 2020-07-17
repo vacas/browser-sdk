@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import Card from 'react-bootstrap/Card';
 import Accordion from 'react-bootstrap/Accordion';
 import Table from 'react-bootstrap/Table';
@@ -9,7 +9,8 @@ interface ViewDetailCardProps {
     viewDetail: ViewDetail;
 }
 
-const formatDate = (date: number)  => new Date(date).toLocaleTimeString()
+const step = 5;
+const formatDate = (date: number)  => new Date(date).toLocaleTimeString();
 
 export const ViewDetailCard = ({ viewDetail }: ViewDetailCardProps)  => {
     return (
@@ -27,24 +28,35 @@ export const ViewDetailCard = ({ viewDetail }: ViewDetailCardProps)  => {
 }
 
 const ViewDetailExpanded = ({ viewDetail }: ViewDetailCardProps) => {
+    const [limit, setLimit] = useState(step)
+    const displayedEvents  = viewDetail.events ? viewDetail.events.slice(0, limit) : []
+
+    const seeMore = useCallback(() => {
+        setLimit(limit + step)
+    }, [limit])
+
     return (
-        <Table striped bordered hover variant="dark">
-            <thead>
-                <tr>
-                    <th>Child event</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {viewDetail && viewDetail.events && viewDetail.events.map((event: any) => {
-                    return (
-                        <tr>
-                            <td style={{color: event.color}}>{event.description.substring(0, 100)}</td>
-                            <td>{formatDate(event.date)}</td>
-                        </tr>
-                    )
-                })}
-            </tbody>
-        </Table>
+        <>
+            <Table striped bordered hover variant="dark">
+                <thead>
+                    <tr>
+                        <th>Child event</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {displayedEvents.map((event: any) => {
+                        return (
+                            <tr>
+                                <td style={{color: event.color}}>{event.description.substring(0, 100)}</td>
+                                <td>{formatDate(event.date)}</td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </Table>
+
+            {viewDetail.events && viewDetail.events.length > limit && <p style={{ display: "flex", justifyContent: "center", fontStyle: "italic", cursor: "pointer" }} onClick={seeMore}>see more</p>}
+        </>
     )
 }
