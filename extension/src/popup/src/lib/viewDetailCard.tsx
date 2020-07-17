@@ -48,7 +48,12 @@ const ViewDetailExpanded = ({ viewDetail }: ViewDetailCardProps) => {
                     {displayedEvents.map((event: any) => {
                         return (
                             <tr>
-                                <td style={{color: event.color}}>{event.description.substring(0, 100)}</td>
+                                <td>
+                                    <div style={{ display: "flex"}}>
+                                        <p style={{backgroundColor: event.color, minWidth: "5px", width: "5px", borderRadius: "10px", height: "30px", marginRight: "10px"}} />
+                                        <p>{event.description.substring(0, 100)}</p>
+                                    </div>
+                                </td>
                                 <td>{formatDate(event.date)}</td>
                             </tr>
                         )
