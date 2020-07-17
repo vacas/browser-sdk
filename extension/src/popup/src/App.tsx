@@ -73,7 +73,7 @@ function ViewDetailCard({viewDetail}: ViewDetailCardProps){
   return (
     <Card className="App-view-card">
       <Accordion.Toggle as={Card.Header} eventKey={viewDetail.id} className="App-view-card-header">
-         {viewDetail.description} - {viewDetail.date}
+         {viewDetail.description} - {formatDate(viewDetail.date)}
         </Accordion.Toggle>
       <Accordion.Collapse eventKey={viewDetail.id}>
         <Card.Body className="App-view-card-body">
@@ -84,6 +84,9 @@ function ViewDetailCard({viewDetail}: ViewDetailCardProps){
   )
 }
 
+function formatDate(date: number) {
+  return new Date(date).toLocaleTimeString()
+}
 
 function ViewDetailExpanded({viewDetail}: ViewDetailCardProps){
   return (
@@ -99,7 +102,7 @@ function ViewDetailExpanded({viewDetail}: ViewDetailCardProps){
       return (
         <tr>
         <td>{event.description.substring(0, 100)}</td>
-        <td>{event.date}</td>
+        <td>{formatDate(event.date)}</td>
       </tr>
     )
     })}
