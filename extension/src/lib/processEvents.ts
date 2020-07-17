@@ -1,11 +1,4 @@
-import { RumEvent, View, ViewDetail } from './rumEvents'
-
-// TODO remove me
-export function addOrUpdateViews(addOrUpdateView: View, oldViews: View[]) {
-  const newViews: View[] = oldViews.filter((view) => view.id !== addOrUpdateView.id)
-  newViews.push(addOrUpdateView)
-  return newViews
-}
+import { RumEvent, ViewDetail } from './rumEvents'
 
 export function updateViewDetails({ event }: { event: RumEvent }, viewDetails: ViewDetail[]) {
   let parentViewDetail = viewDetails.find((viewDetail) => viewDetail.id === event.view.id)
