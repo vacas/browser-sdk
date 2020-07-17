@@ -9,12 +9,7 @@ interface ViewDetailCardProps {
     viewDetail: ViewDetail;
 }
 
-
-function formatDate(date: number) {
-    return new Date(date).toLocaleTimeString()
-}
-
-
+const formatDate = (date: number)  => new Date(date).toLocaleTimeString()
 
 export const ViewDetailCard = ({ viewDetail }: ViewDetailCardProps)  => {
     return (
@@ -36,15 +31,15 @@ const ViewDetailExpanded = ({ viewDetail }: ViewDetailCardProps) => {
         <Table striped bordered hover variant="dark">
             <thead>
                 <tr>
-                    <th>description</th>
-                    <th>date</th>
+                    <th>Child event</th>
+                    <th>Date</th>
                 </tr>
             </thead>
             <tbody>
                 {viewDetail && viewDetail.events && viewDetail.events.map((event: any) => {
                     return (
                         <tr>
-                            <td>{event.description.substring(0, 100)}</td>
+                            <td style={{color: event.color}}>{event.description.substring(0, 100)}</td>
                             <td>{formatDate(event.date)}</td>
                         </tr>
                     )

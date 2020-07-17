@@ -1,4 +1,4 @@
-import { RumEvent, ViewDetail } from './rumEvents'
+import { RumEvent, ViewDetail, RUM_EVENT_COLOR } from './rumEvents'
 
 export function updateViewDetails({ event }: { event: RumEvent }, viewDetails: ViewDetail[]) {
   let parentViewDetail = viewDetails.find((viewDetail) => viewDetail.id === event.view.id)
@@ -16,6 +16,7 @@ export function updateViewDetails({ event }: { event: RumEvent }, viewDetails: V
       event,
       date: event.date,
       description: computeDescription(event.evt.category, event),
+      color: RUM_EVENT_COLOR[event.evt.category] || RUM_EVENT_COLOR['default']
     })
   }
   return viewDetails
