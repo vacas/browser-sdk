@@ -1,9 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
 import Card from 'react-bootstrap/Card';
 import Accordion from 'react-bootstrap/Accordion';
 import Table from 'react-bootstrap/Table';
 
 import { ViewDetail } from './rumEventsType'
+
+import AccordionContext from 'react-bootstrap/AccordionContext';
+
+import angleDown from '../angle-down.svg';
+import angleRight from '../angle-right.svg';
 
 interface ViewDetailCardProps {
     viewDetail: ViewDetail;
@@ -13,10 +18,12 @@ const step = 5;
 const formatDate = (date: number)  => new Date(date).toLocaleTimeString();
 
 export const ViewDetailCard = ({ viewDetail }: ViewDetailCardProps)  => {
+    const currentEventKey = useContext(AccordionContext);
+
     return (
         <Card className="App-view-card">
             <Accordion.Toggle as={Card.Header} eventKey={viewDetail.id} className="App-view-card-header">
-                {viewDetail.description} - {formatDate(viewDetail.date)}
+            <img src={!currentEventKey || currentEventKey !== viewDetail.id ? angleRight : angleDown} className="App-view-card-header-icon" alt="logo" /> {viewDetail.description} - {formatDate(viewDetail.date)}
             </Accordion.Toggle>
             <Accordion.Collapse eventKey={viewDetail.id}>
                 <Card.Body className="App-view-card-body">

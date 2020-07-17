@@ -48,11 +48,9 @@
   background-color: #282c34;
 }
 
-.event-filters input[type="checkbox"] {
-  vertical-align: sub;
-  margin-left: 2px;
-}
-
-.event-filters label {
-  margin-left: 12px;
+.App-view-card-header-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  fill: white;
 }

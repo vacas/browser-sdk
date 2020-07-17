@@ -14,4 +14,3 @@ HTML_TAG.addEventListener(EVENTS.RUM_EVENT_NAME, (customEvent: CustomEvent<Custo
     })
   }
 })
-

@@ -16,7 +16,7 @@ export function updateViewDetails({ event }: { event: RumEvent }, viewDetails: V
       event,
       date: event.date,
       description: computeDescription(event.evt.category, event),
-      color: RUM_EVENT_COLOR[event.evt.category] || RUM_EVENT_COLOR['default']
+      color: RUM_EVENT_COLOR[event.evt.category] || RUM_EVENT_COLOR['default'],
     })
   }
   return viewDetails

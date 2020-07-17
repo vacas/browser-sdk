@@ -5,6 +5,7 @@ import Accordion from 'react-bootstrap/Accordion';
 import { EventFilters } from './lib/eventFilters'
 
 
+
 import { Filters, ViewDetail } from './lib/rumEventsType'
 import { ViewDetailCard } from './lib/viewDetailCard'
 
