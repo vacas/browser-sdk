@@ -54,3 +54,12 @@
   margin-right: 10px;
   fill: white;
 }
+
+.event-filters input[type="checkbox"] {
+  vertical-align: sub;
+  margin-left: 2px;
+}
+
+.event-filters label {
+  margin-left: 12px;
+}
