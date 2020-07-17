@@ -88,3 +88,10 @@ export const RUM_EVENT_COLOR = {
   long_task: 'rgb(246, 111, 120)',
   user_action: 'rgb(146, 110, 182)',
 }
+
+export interface Filters {
+  withAction: boolean
+  withError: boolean
+  withLongTask: boolean
+  withResource: boolean
+}

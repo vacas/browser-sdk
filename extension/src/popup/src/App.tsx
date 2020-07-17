@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import logo from './bits48.png';
 import './App.css';
 import Accordion from 'react-bootstrap/Accordion';
+import { EventFilters } from './lib/eventFilters'
 
 
-import { ViewDetail } from './lib/rumEventsType'
+import { Filters, ViewDetail } from './lib/rumEventsType'
 import { ViewDetailCard } from './lib/viewDetailCard'
 
 const backgroundPageConnection = chrome.runtime.connect({ name: 'name' });
@@ -37,14 +38,23 @@ export default function App() {
     }
   }, [listener])
 
+  const [filters, setFilters] = useState<Filters>({
+    withAction: true,
+    withError: true,
+    withLongTask: true,
+    withResource: true,
+  })
+
+  const filteredViewDetails = filter(viewDetails, filters)
+
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-
-        {viewDetails &&
+        {EventFilters(filters, setFilters)}
+        {filteredViewDetails &&
           <Accordion className="App-view-accordion">
-            {viewDetails.map((viewDetail: ViewDetail) => {
+            {filteredViewDetails.map((viewDetail: ViewDetail) => {
               return (<ViewDetailCard key={viewDetail.id} viewDetail={viewDetail} />);
 
             })}
@@ -54,4 +64,16 @@ export default function App() {
       </header>
     </div>
   );
+}
+
+function filter(viewDetails: ViewDetail[], filters: Filters) {
+  const allowedTypes: string[] = []
+  filters.withAction && allowedTypes.push('user_action')
+  filters.withError && allowedTypes.push('error')
+  filters.withLongTask && allowedTypes.push('long_task')
+  filters.withResource && allowedTypes.push('resource')
+  return viewDetails.map(viewDetail => ({
+    ...viewDetail,
+    events: viewDetail.events.filter(event => allowedTypes.indexOf(event.event.evt.category) !== -1)
+  }))
 }
