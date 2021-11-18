@@ -5,7 +5,7 @@ import { RumConfigTab } from './tabs/rumConfigTab'
 
 export function Panel() {
   return (
-    <Tabs defaultSelectedId="tab1">
+    <Tabs>
       <Tabs.List>
         <Tabs.Tab tabId="tab1">Actions</Tabs.Tab>
         <Tabs.Tab tabId="tab2">RUM Config</Tabs.Tab>
