@@ -35,6 +35,12 @@ module.exports = (_env, argv) => {
         }),
       ],
     }),
+    baseConfig({
+      entry: './src/contentscript',
+      output: {
+        filename: 'contentscript.js',
+      },
+    }),
   ]
 
   function baseConfig({ entry, output, plugins }) {

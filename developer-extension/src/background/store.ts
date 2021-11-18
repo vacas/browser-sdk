@@ -7,6 +7,7 @@ export const store: Store = {
   useDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
+  config: {},
 }
 
 export function setStore(newStore: Partial<Store>) {

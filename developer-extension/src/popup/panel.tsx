@@ -1,11 +1,11 @@
-import { Checkbox, Stack, Button, Badge } from 'bumbag'
+import { Checkbox, Stack, Button, Badge, Disclosure } from 'bumbag'
 import React from 'react'
 import { sendAction } from './actions'
 import { useStore } from './useStore'
 
 export function Panel() {
   const [
-    { useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests },
+    { useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests, config },
     setStore,
   ] = useStore()
   return (
@@ -38,6 +38,11 @@ export function Panel() {
         checked={blockIntakeRequests}
         onChange={(e) => setStore({ blockIntakeRequests: isChecked(e.target) })}
       />
+
+      <Disclosure.State>
+        <Disclosure onClick={() => sendAction('getConfig', undefined)}>Config</Disclosure>
+        <Disclosure.Content>{JSON.stringify(config)}</Disclosure.Content>
+      </Disclosure.State>
 
       <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>
 

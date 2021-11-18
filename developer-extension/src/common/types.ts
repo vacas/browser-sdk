@@ -3,6 +3,8 @@ export interface BackgroundActions {
   setStore: Partial<Store>
   flushEvents: void
   endSession: void
+  getConfig: void
+  configReceived: any
 }
 
 export interface PopupActions {
@@ -15,4 +17,5 @@ export interface Store {
   useRumSlim: boolean
   logEventsFromRequests: boolean
   blockIntakeRequests: boolean
+  config: any
 }
