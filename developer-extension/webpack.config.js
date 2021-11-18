@@ -41,6 +41,17 @@ module.exports = (_env, argv) => {
         filename: 'contentscript.js',
       },
     }),
+    baseConfig({
+      entry: './src/devtools',
+      output: {
+        filename: 'devtools.js',
+      },
+      plugins: [
+        new HtmlWebpackPlugin({
+          filename: 'devtools.html',
+        }),
+      ],
+    }),
   ]
 
   function baseConfig({ entry, output, plugins }) {
