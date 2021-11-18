@@ -8,7 +8,7 @@ export function RumConfigTab() {
   sendAction('getConfig', undefined)
   return (
     config && (
-      <Table>
+      <Table isStriped>
         <Table.Head>
           <Table.Row>
             <Table.HeadCell>Attribute</Table.HeadCell>
