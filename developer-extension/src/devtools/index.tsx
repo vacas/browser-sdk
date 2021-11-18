@@ -1,6 +1,6 @@
 chrome.devtools.panels.create("Browser SDK",
   "icon.png",
-  "popup.html",
+  "panel.html",
   function() {
     // code invoked on panel creation
   }
