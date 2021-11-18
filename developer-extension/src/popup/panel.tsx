@@ -1,4 +1,4 @@
-import { Checkbox, Stack, Button, Badge, Disclosure } from 'bumbag'
+import { Checkbox, Stack, Button, Badge, Disclosure, Table } from 'bumbag'
 import React from 'react'
 import { sendAction } from './actions'
 import { useStore } from './useStore'
@@ -41,7 +41,26 @@ export function Panel() {
 
       <Disclosure.State>
         <Disclosure onClick={() => sendAction('getConfig', undefined)}>Config</Disclosure>
-        <Disclosure.Content>{JSON.stringify(config)}</Disclosure.Content>
+        <Disclosure.Content>
+          {config && (
+            <Table>
+              <Table.Head>
+                <Table.Row>
+                  <Table.HeadCell>Attribute</Table.HeadCell>
+                  <Table.HeadCell>Value</Table.HeadCell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
+                {Object.entries(config).map((entry) => (
+                  <Table.Row>
+                    <Table.Cell>{entry[0]}</Table.Cell>
+                    <Table.Cell>{entry[1]}</Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+          )}
+        </Disclosure.Content>
       </Disclosure.State>
 
       <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>

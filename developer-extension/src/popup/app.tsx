@@ -7,11 +7,6 @@ const theme = {
   global: {
     fontSize: 14,
     styles: {
-      base: css`
-        body {
-          width: 300px;
-        }
-      `,
     },
   },
   modes: {

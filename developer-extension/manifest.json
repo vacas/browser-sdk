@@ -17,7 +17,6 @@
   ],
   "devtools_page": "devtools.html",
   "browser_action": {
-    "default_title": "Browser SDK extension",
-    "default_popup": "popup.html"
+    "default_title": "Browser SDK extension"
   }
 }
