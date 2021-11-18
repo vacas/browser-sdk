@@ -7,7 +7,8 @@ export const store: Store = {
   useDevBundles: false,
   useRumSlim: false,
   blockIntakeRequests: false,
-  config: {},
+  rumConfig: {},
+  logsConfig: {},
 }
 
 export function setStore(newStore: Partial<Store>) {

@@ -3,11 +3,11 @@ import React from 'react'
 import { sendAction } from '../actions'
 import { useStore } from '../useStore'
 
-export function RumConfigTab() {
-  const [{ rumConfig }] = useStore()
-  sendAction('getConfig', 'rum')
+export function LogsConfigTab() {
+  const [{ logsConfig }] = useStore()
+  sendAction('getConfig', 'logs')
   return (
-    rumConfig && (
+    logsConfig && (
       <Table isStriped>
         <Table.Head>
           <Table.Row>
@@ -16,7 +16,7 @@ export function RumConfigTab() {
           </Table.Row>
         </Table.Head>
         <Table.Body>
-          {Object.entries(rumConfig).map((entry) => (
+          {Object.entries(logsConfig).map((entry) => (
             <Table.Row>
               <Table.Cell>{entry[0]}</Table.Cell>
               <Table.Cell>{JSON.stringify(entry[1])}</Table.Cell>

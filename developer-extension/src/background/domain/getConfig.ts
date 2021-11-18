@@ -2,9 +2,13 @@ import { evaluateCodeInActiveTab } from '../utils'
 import { listenAction } from '../actions'
 import { setStore } from '../store'
 
-listenAction('getConfig', () => {
-  evaluateCodeInActiveTab(() => {
-    sendActionAsDomEvent('configReceived', (window as any).DD_RUM.getInitConfiguration())
+listenAction('getConfig', (type) => {
+  evaluateCodeInActiveTab((type) => {
+    sendActionAsDomEvent('configReceived', {
+      type,
+      config:
+        type === 'rum' ? (window as any).DD_RUM.getInitConfiguration() : (window as any).DD_LOGS.getInitConfiguration(),
+    })
 
     function sendActionAsDomEvent(action: string, payload: any) {
       document.querySelector('html').dispatchEvent(
@@ -13,9 +17,9 @@ listenAction('getConfig', () => {
         } as any)
       )
     }
-  })
+  }, type)
 })
 
-listenAction('configReceived', (config) => {
-  setStore({ config })
+listenAction('configReceived', ({ type, config }) => {
+  setStore(type === 'rum' ? { rumConfig: config } : { logsConfig: config })
 })

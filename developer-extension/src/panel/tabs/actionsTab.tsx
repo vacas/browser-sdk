@@ -5,7 +5,7 @@ import { useStore } from '../useStore'
 
 export function ActionsTab() {
   const [
-    { useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests, config },
+    { useDevBundles, useRumSlim, logEventsFromRequests, devServerStatus, blockIntakeRequests, rumConfig },
     setStore,
   ] = useStore()
   return (
