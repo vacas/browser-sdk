@@ -39,6 +39,8 @@ export function ActionsTab() {
         onChange={(e) => setStore({ blockIntakeRequests: isChecked(e.target) })}
       />
 
+      <Button onClick={() => sendAction('toggleActionName', undefined)}>Toggle action names</Button>
+
       <Button onClick={() => sendAction('flushEvents', undefined)}>Flush buffered events</Button>
 
       <Button onClick={() => sendAction('endSession', undefined)}>End current session</Button>

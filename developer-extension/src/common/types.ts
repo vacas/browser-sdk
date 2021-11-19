@@ -2,6 +2,7 @@ export interface BackgroundActions {
   getStore: void
   setStore: Partial<Store>
   flushEvents: void
+  toggleActionName: void
   endSession: void
   getConfig: 'rum' | 'logs'
   configReceived: any

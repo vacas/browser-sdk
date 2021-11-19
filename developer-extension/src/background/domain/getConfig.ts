@@ -14,7 +14,7 @@ listenAction('getConfig', (type) => {
 
     function sendActionAsDomEvent(action: string, payload: any) {
       document.querySelector('html').dispatchEvent(
-        new CustomEvent('extension', {
+        new CustomEvent('send-to-background', {
           detail: { action, payload },
         } as any)
       )
