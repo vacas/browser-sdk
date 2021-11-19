@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-len
 import { getActionNameFromElement } from '@datadog/browser-rum-core/src/domain/rumEventsCollection/action/getActionNameFromElement'
 
 const SPAN_ID = 'display-action-name'
