@@ -4,10 +4,11 @@ import { sendAction } from '../actions'
 import { useStore } from '../useStore'
 
 export function LogsConfigTab() {
-  const [{ logsConfig }] = useStore()
+  const [{ local }] = useStore()
   sendAction('getConfig', 'logs')
+  const currentTabStore = local[chrome.devtools.inspectedWindow.tabId]
   return (
-    logsConfig && (
+    currentTabStore?.logsConfig ? (
       <Table isStriped>
         <Table.Head>
           <Table.Row>
@@ -16,7 +17,7 @@ export function LogsConfigTab() {
           </Table.Row>
         </Table.Head>
         <Table.Body>
-          {Object.entries(logsConfig).map((entry) => (
+          {Object.entries(currentTabStore.logsConfig).map((entry) => (
             <Table.Row>
               <Table.Cell>{entry[0]}</Table.Cell>
               <Table.Cell>{JSON.stringify(entry[1])}</Table.Cell>
@@ -24,6 +25,6 @@ export function LogsConfigTab() {
           ))}
         </Table.Body>
       </Table>
-    )
+    ) : null
   )
 }

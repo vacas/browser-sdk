@@ -4,10 +4,11 @@ import { sendAction } from '../actions'
 import { useStore } from '../useStore'
 
 export function RumConfigTab() {
-  const [{ rumConfig }] = useStore()
+  const [{ local }] = useStore()
   sendAction('getConfig', 'rum')
+  const currentTabStore = local[chrome.devtools.inspectedWindow.tabId]
   return (
-    rumConfig && (
+    currentTabStore?.rumConfig ? (
       <Table isStriped>
         <Table.Head>
           <Table.Row>
@@ -16,7 +17,7 @@ export function RumConfigTab() {
           </Table.Row>
         </Table.Head>
         <Table.Body>
-          {Object.entries(rumConfig).map((entry) => (
+          {Object.entries(currentTabStore.rumConfig).map((entry) => (
             <Table.Row>
               <Table.Cell>{entry[0]}</Table.Cell>
               <Table.Cell>{JSON.stringify(entry[1])}</Table.Cell>
@@ -24,6 +25,6 @@ export function RumConfigTab() {
           ))}
         </Table.Body>
       </Table>
-    )
+    ) : null
   )
 }

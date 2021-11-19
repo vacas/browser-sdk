@@ -17,6 +17,12 @@ export interface Store {
   useRumSlim: boolean
   logEventsFromRequests: boolean
   blockIntakeRequests: boolean
+  local: {
+    [tabId: number]: LocalStore
+  }
+}
+
+export interface LocalStore {
   rumConfig: any
   logsConfig: any
 }

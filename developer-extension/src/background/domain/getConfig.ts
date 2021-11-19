@@ -1,6 +1,6 @@
 import { evaluateCodeInActiveTab } from '../utils'
 import { listenAction } from '../actions'
-import { setStore } from '../store'
+import { setLocalStore } from '../store'
 
 listenAction('getConfig', (type) => {
   evaluateCodeInActiveTab((type) => {
@@ -20,6 +20,6 @@ listenAction('getConfig', (type) => {
   }, type)
 })
 
-listenAction('configReceived', ({ type, config }) => {
-  setStore(type === 'rum' ? { rumConfig: config } : { logsConfig: config })
+listenAction('configReceived', ({ type, config }, tabId) => {
+  setLocalStore(type === 'rum' ? { rumConfig: config } : { logsConfig: config }, tabId)
 })
