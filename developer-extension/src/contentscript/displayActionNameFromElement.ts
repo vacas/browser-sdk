@@ -10,7 +10,7 @@ document.querySelector('html').addEventListener('toggleActionName', () => {
     spanElement.id = SPAN_ID
     spanElement.setAttribute(
       'style',
-      'position: fixed; display: block; top: 0; left: 0; background-color: red; z-index: 1000000; padding: 5 px;'
+      'position: fixed; display: block; top: 0; left: 0; background-color: red; z-index: 1000000; padding: 5px;'
     )
 
     spanElement.innerText = 'hover elements on the page...'
