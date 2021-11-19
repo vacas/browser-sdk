@@ -22,13 +22,13 @@ export function Panel() {
         <Tabs.Tab tabId="tab3">Logs Config</Tabs.Tab>
       </Tabs.List>
       <Tabs.Panel tabId="tab1" padding="major-2">
-        <ActionsTab/>
+        <ActionsTab />
       </Tabs.Panel>
       <Tabs.Panel tabId="tab2" padding="major-2">
-        <ConfigTab product={'rum'}/>
+        <ConfigTab product={'rum'} />
       </Tabs.Panel>
       <Tabs.Panel tabId="tab3" padding="major-2">
-        <ConfigTab product={'logs'}/>
+        <ConfigTab product={'logs'} />
       </Tabs.Panel>
     </Tabs>
   )
