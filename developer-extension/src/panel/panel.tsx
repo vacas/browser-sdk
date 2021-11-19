@@ -1,10 +1,19 @@
 import { Tabs } from 'bumbag'
 import React from 'react'
 import { ActionsTab } from './tabs/actionsTab'
-import { RumConfigTab } from './tabs/rumConfigTab'
-import { LogsConfigTab } from './tabs/logsConfigTab'
+import { ConfigTab } from './tabs/configTab'
+import { sendAction } from './actions'
 
 export function Panel() {
+  setInterval(() => {
+    sendAction('getConfig', 'rum')
+    sendAction('getConfig', 'logs')
+  }, 2000)
+
+  chrome.devtools.network.onNavigated.addListener(() => {
+    sendAction('getConfig', 'rum')
+    sendAction('getConfig', 'logs')
+  })
   return (
     <Tabs>
       <Tabs.List>
@@ -16,10 +25,10 @@ export function Panel() {
         <ActionsTab/>
       </Tabs.Panel>
       <Tabs.Panel tabId="tab2" padding="major-2">
-        <RumConfigTab/>
+        <ConfigTab product={'rum'}/>
       </Tabs.Panel>
       <Tabs.Panel tabId="tab3" padding="major-2">
-        <LogsConfigTab />
+        <ConfigTab product={'logs'}/>
       </Tabs.Panel>
     </Tabs>
   )

@@ -7,7 +7,9 @@ listenAction('getConfig', (type) => {
     sendActionAsDomEvent('configReceived', {
       type,
       config:
-        type === 'rum' ? (window as any).DD_RUM.getInitConfiguration() : (window as any).DD_LOGS.getInitConfiguration(),
+        type === 'rum'
+          ? (window as any).DD_RUM?.getInitConfiguration()
+          : (window as any).DD_LOGS?.getInitConfiguration(),
     })
 
     function sendActionAsDomEvent(action: string, payload: any) {

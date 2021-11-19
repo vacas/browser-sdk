@@ -1,14 +1,13 @@
 import { Table } from 'bumbag'
 import React from 'react'
-import { sendAction } from '../actions'
 import { useStore } from '../useStore'
 
-export function LogsConfigTab() {
+export function ConfigTab(props: { product: string }) {
   const [{ local }] = useStore()
-  sendAction('getConfig', 'logs')
   const currentTabStore = local[chrome.devtools.inspectedWindow.tabId]
+  const config = props.product === 'rum' ? currentTabStore?.rumConfig : currentTabStore?.logsConfig
   return (
-    currentTabStore?.logsConfig ? (
+    config ? (
       <Table isStriped>
         <Table.Head>
           <Table.Row>
@@ -17,8 +16,8 @@ export function LogsConfigTab() {
           </Table.Row>
         </Table.Head>
         <Table.Body>
-          {Object.entries(currentTabStore.logsConfig).map((entry) => (
-            <Table.Row>
+          {Object.entries(config).map((entry) => (
+            <Table.Row key={entry[0]}>
               <Table.Cell>{entry[0]}</Table.Cell>
               <Table.Cell>{JSON.stringify(entry[1])}</Table.Cell>
             </Table.Row>

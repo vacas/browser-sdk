@@ -28,7 +28,7 @@ export function createListenAction<Actions>() {
 
 export function createSendAction<Actions>() {
   function sendAction<K extends keyof Actions>(action: K, payload: Actions[K]) {
-    console.log('sendAction', action)
+    console.log('sendAction', action, JSON.stringify(payload))
     return chrome.runtime.sendMessage({ action, payload }, () => {
       const error = chrome.runtime.lastError
       if (
