@@ -73,14 +73,14 @@ function createXhrObservable() {
   return observable
 }
 
-function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string) {
+function openXhr(this: BrowserXHR<XhrOpenContext>, method: string, url: string | URL) {
   // WARN: since this data structure is tied to the instance, it is shared by both logs and rum
   // and can be used by different code versions depending on customer setup
   // so it should stay compatible with older versions
   this._datadog_xhr = {
     state: 'open',
     method,
-    url: normalizeUrl(url),
+    url: normalizeUrl(url.toString()),
   }
 }
 

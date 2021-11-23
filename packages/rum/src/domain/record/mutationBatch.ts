@@ -36,11 +36,7 @@ export function createMutationBatch(processMutationBatch: (mutations: RumMutatio
 }
 
 function scheduleMutationFlush(flush: () => void) {
-  interface BrowserWindow extends Window {
-    requestIdleCallback: (callback: () => void, opts?: { timeout?: number }) => number
-    cancelIdleCallback: (handle?: number) => void
-  }
-  const browserWindow = (window as unknown) as BrowserWindow
+  const browserWindow = window
 
   // Use 'requestIdleCallback' when available: it will throttle the mutation processing if the
   // browser is busy rendering frames (ex: when frames are below 60fps). When not available, the

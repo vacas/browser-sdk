@@ -82,7 +82,7 @@ export function doStartDeflateWorker(createDeflateWorkerImpl = createDeflateWork
     worker.postMessage({ action: 'init' })
     return worker
   } catch (error) {
-    onError(error)
+    onError(error as any)
   }
 }
 

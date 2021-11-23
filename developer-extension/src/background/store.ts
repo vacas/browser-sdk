@@ -13,7 +13,7 @@ export function setStore(newStore: Partial<Store>) {
   if (wouldModifyStore(newStore)) {
     Object.assign(store, newStore)
     sendAction('newStore', store)
-    chrome.storage.local.set({ store })
+    void chrome.storage.local.set({ store })
   }
 }
 

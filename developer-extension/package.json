@@ -7,7 +7,7 @@
     "dev": "webpack --mode development --watch"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.125",
+    "@types/chrome": "0.0.164",
     "@types/react": "16",
     "@types/react-dom": "16",
     "copy-webpack-plugin": "8.1.0",
@@ -17,6 +17,7 @@
   "dependencies": {
     "bumbag": "1.6.12",
     "react": "16.14.0",
-    "react-dom": "16.14.0"
+    "react-dom": "16.14.0",
+    "tslib": "2.3.1"
   }
 }
