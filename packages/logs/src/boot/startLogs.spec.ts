@@ -9,6 +9,7 @@ import {
   RawError,
   RelativeTime,
   TimeStamp,
+  getTimeStamp,
 } from '@datadog/browser-core'
 import sinon from 'sinon'
 import { Clock, mockClock, stubEndpointBuilder } from '../../../core/test/specHelper'
@@ -91,7 +92,7 @@ describe('logs', () => {
       expect(server.requests.length).toEqual(1)
       expect(server.requests[0].url).toContain(baseConfiguration.logsEndpointBuilder!.build())
       expect(getLoggedMessage(server, 0)).toEqual({
-        date: FAKE_DATE,
+        date: FAKE_DATE as TimeStamp,
         foo: 'bar',
         message: 'message',
         service: 'Service',
@@ -117,6 +118,30 @@ describe('logs', () => {
         id: 'view-id',
         url: 'http://from-rum-context.com',
       })
+    })
+
+    it('should use the rum internal context related to the error time', () => {
+      window.DD_RUM = {
+        getInternalContext(startTime) {
+          return {
+            foo: startTime === 1234 ? 'b' : 'a',
+          }
+        },
+      }
+      let sendLogStrategy: (message: LogsMessage, currentContext: Context) => void = noop
+      const sendLog = (message: LogsMessage) => {
+        sendLogStrategy(message, {})
+      }
+      sendLogStrategy = startLogs({ errorLogger: new Logger(sendLog) })
+
+      errorObservable.notify({
+        message: 'error!',
+        source: ErrorSource.SOURCE,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: getTimeStamp(1234 as RelativeTime) },
+        type: 'Error',
+      })
+
+      expect(getLoggedMessage(server, 0).foo).toBe('b')
     })
 
     it('should all use the same batch', () => {
@@ -274,28 +299,6 @@ describe('logs', () => {
           status: StatusType.error,
         },
       ])
-    })
-
-    it('should use the rum internal context related to the error time', () => {
-      window.DD_RUM = {
-        getInternalContext(startTime) {
-          return {
-            foo: startTime === 1234 ? 'b' : 'a',
-          }
-        },
-      }
-      const sendLogSpy = jasmine.createSpy<(message: LogsMessage & { foo?: string }) => void>()
-      startLogs({ errorLogger: new Logger(sendLogSpy) })
-
-      errorObservable.notify({
-        message: 'error!',
-        source: ErrorSource.SOURCE,
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: -1 as TimeStamp },
-        type: 'Error',
-      })
-
-      expect(sendLogSpy).toHaveBeenCalled()
-      expect(sendLogSpy.calls.argsFor(0)[0].foo).toBe('b')
     })
   })
 
