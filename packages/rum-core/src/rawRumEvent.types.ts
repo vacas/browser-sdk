@@ -175,6 +175,7 @@ export interface RumContext {
   }
   service?: string
   session: {
+    id: string
     type: string
     has_replay?: boolean
   }
@@ -192,9 +193,6 @@ export interface RumContext {
 }
 
 export interface ViewContext extends Context {
-  session: {
-    id: string | undefined
-  }
   view: {
     id: string
     name?: string
