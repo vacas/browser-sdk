@@ -1,5 +1,6 @@
 import { Clock, mockClock } from '../../../test/specHelper'
 import { CookieOptions, getCookie, setCookie, COOKIE_ACCESS_DELAY } from '../../browser/cookie'
+import { MonitoringMessage, startFakeInternalMonitoring, resetInternalMonitoring } from '../internalMonitoring'
 import { startSessionStore, SESSION_COOKIE_NAME, SessionStore } from './sessionStore'
 
 enum FakeTrackingType {
@@ -243,6 +244,16 @@ describe('session store', () => {
   })
 
   describe('regular watch', () => {
+    let monitoringMessages: MonitoringMessage[]
+
+    beforeEach(() => {
+      monitoringMessages = startFakeInternalMonitoring()
+    })
+
+    afterEach(() => {
+      resetInternalMonitoring()
+    })
+
     it('when session not in cache and session not in store, should do nothing', () => {
       setupSessionStore()
 
@@ -250,6 +261,7 @@ describe('session store', () => {
 
       expect(sessionStore.getSession().id).toBeUndefined()
       expect(expireSpy).not.toHaveBeenCalled()
+      expect(monitoringMessages.length).toBe(0)
     })
 
     it('when session not in cache and session in store, should do nothing', () => {
@@ -260,6 +272,7 @@ describe('session store', () => {
 
       expect(sessionStore.getSession().id).toBeUndefined()
       expect(expireSpy).not.toHaveBeenCalled()
+      expect(monitoringMessages.length).toBe(0)
     })
 
     it('when session in cache and session not in store, should expire session', () => {
@@ -271,6 +284,7 @@ describe('session store', () => {
 
       expect(sessionStore.getSession().id).toBeUndefined()
       expect(expireSpy).toHaveBeenCalled()
+      expect(monitoringMessages.length).toBe(0)
     })
 
     it('when session in cache is same session than in store, should do nothing', () => {
@@ -281,9 +295,10 @@ describe('session store', () => {
 
       expect(sessionStore.getSession().id).toBe(FIRST_ID)
       expect(expireSpy).not.toHaveBeenCalled()
+      expect(monitoringMessages.length).toBe(0)
     })
 
-    it('when session in cache is different session than in store, should expire session', () => {
+    it('when session id in cache is different than session id in store, should expire session', () => {
       setSessionInStore(FIRST_ID)
       setupSessionStore()
       setSessionInStore(SECOND_ID)
@@ -292,6 +307,19 @@ describe('session store', () => {
 
       expect(sessionStore.getSession().id).toBeUndefined()
       expect(expireSpy).toHaveBeenCalled()
+      expect(monitoringMessages.length).toBe(1)
+    })
+
+    it('when session type in cache is different than session type in store, should expire session', () => {
+      setSessionInStore(FIRST_ID, FakeTrackingType.NOT_TRACKED)
+      setupSessionStore()
+      setSessionInStore(FIRST_ID, FakeTrackingType.TRACKED)
+
+      clock.tick(COOKIE_ACCESS_DELAY)
+
+      expect(sessionStore.getSession().id).toBeUndefined()
+      expect(expireSpy).toHaveBeenCalled()
+      expect(monitoringMessages.length).toBe(1)
     })
   })
 })
