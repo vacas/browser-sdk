@@ -5,6 +5,8 @@ import {
   SESSION_COOKIE_NAME,
   setCookie,
   stopSessionManagement,
+  ONE_SECOND,
+  RelativeTime,
 } from '@datadog/browser-core'
 import { Clock, mockClock } from '../../../core/test/specHelper'
 
@@ -13,10 +15,11 @@ import { LOGGER_SESSION_KEY, LoggerTrackingType, startLoggerSession } from './lo
 describe('logger session', () => {
   const DURATION = 123456
   const configuration: Partial<Configuration> = { sampleRate: 0.5 }
-  let tracked = true
   let clock: Clock
+  let tracked: boolean
 
   beforeEach(() => {
+    tracked = true
     spyOn(Math, 'random').and.callFake(() => (tracked ? 0 : 1))
     clock = mockClock()
   })
@@ -83,5 +86,20 @@ describe('logger session', () => {
 
     expect(session.getId()).toBeUndefined()
     expect(session.isTracked()).toMatch(/true|false/)
+  })
+
+  it('should get session from history', () => {
+    const session = startLoggerSession(configuration as Configuration, true)
+
+    clock.tick(10 * ONE_SECOND)
+
+    setCookie(SESSION_COOKIE_NAME, '', DURATION)
+    clock.tick(COOKIE_ACCESS_DELAY)
+
+    expect(session.getId()).toBeUndefined()
+    expect(session.isTracked()).toBe(false)
+
+    expect(session.getId(ONE_SECOND as RelativeTime)).toBeDefined()
+    expect(session.isTracked(ONE_SECOND as RelativeTime)).toBe(true)
   })
 })
