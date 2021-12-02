@@ -1,7 +1,7 @@
 import { CookieOptions, COOKIE_ACCESS_DELAY, setCookie, getCookie } from '../../browser/cookie'
 import { Observable } from '../../tools/observable'
 import * as utils from '../../tools/utils'
-import { monitor, addMonitoringMessage } from '../internalMonitoring'
+import { monitor } from '../internalMonitoring'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -79,28 +79,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function isSessionCacheOutdated(cookieSession: SessionState) {
-    if (sessionCache.id !== cookieSession.id) {
-      if (cookieSession.id) {
-        addSessionInconsistenciesMessage(cookieSession, 'different id')
-      }
-      return true
-    }
-    if (sessionCache[productKey] !== cookieSession[productKey]) {
-      addSessionInconsistenciesMessage(cookieSession, 'different tracking type')
-      return true
-    }
-    return false
-  }
-
-  function addSessionInconsistenciesMessage(cookieSession: SessionState, cause: string) {
-    addMonitoringMessage('Session inconsistencies detected', {
-      debug: {
-        productKey,
-        sessionCache,
-        cookieSession,
-        cause,
-      },
-    })
+    return sessionCache.id !== cookieSession.id
   }
 
   function expireSession() {
