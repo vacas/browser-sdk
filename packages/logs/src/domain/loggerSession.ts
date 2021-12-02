@@ -25,7 +25,7 @@ export function startLoggerSession(configuration: Configuration, areCookieAuthor
   )
   return {
     getId: session.getId,
-    isTracked: () => session.getTrackingType() === LoggerTrackingType.TRACKED,
+    isTracked: (startTime) => session.getTrackingType(startTime) === LoggerTrackingType.TRACKED,
   }
 }
 
