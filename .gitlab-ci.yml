@@ -443,7 +443,7 @@ bump-chrome-version-scheduled-success:
     - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <$PULL_REQUEST_URL|PR>."'
     - postmessage "#test-notifications" "$MESSAGE_TEXT"
   dependencies:
-    - staging-reset-scheduled
+    - bump-chrome-version-scheduled
 
 bump-chrome-version-scheduled-failure:
   extends: .prepare_notification
