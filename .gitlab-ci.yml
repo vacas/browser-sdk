@@ -430,15 +430,21 @@ bump-chrome-version-scheduled:
     - eval $(ssh-agent -s)
   script:
     - node scripts/bump-chrome-driver-version.js
+  artifacts:
+    reports:
+      dotenv: build.env
 
 bump-chrome-version-scheduled-success:
   extends: .prepare_notification
   only:
     variables:
       - $TARGET_TASK_NAME == "bump-chrome-version-scheduled"
+      - $PULL_REQUEST_URL
   script:
-    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <https://github.com/DataDog/browser-sdk/pulls|PRs>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <$PULL_REQUEST_URL|PR>."'
+    - postmessage "#test-notifications" "$MESSAGE_TEXT"
+  dependencies:
+    - staging-reset-scheduled
 
 bump-chrome-version-scheduled-failure:
   extends: .prepare_notification
@@ -448,4 +454,4 @@ bump-chrome-version-scheduled-failure:
   when: on_failure
   script:
     - 'MESSAGE_TEXT=":x: [*$CI_PROJECT_NAME*] Chrome version bumped failed on pipeline <$BUILD_URL|$COMMIT_MESSAGE>."'
-    - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
+    - postmessage "#test-notifications" "$MESSAGE_TEXT"
