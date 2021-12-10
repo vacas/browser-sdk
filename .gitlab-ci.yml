@@ -438,8 +438,7 @@ bump-chrome-version-scheduled-success:
   extends: .prepare_notification
   only:
     variables:
-      - $TARGET_TASK_NAME == "bump-chrome-version-scheduled"
-      - $PULL_REQUEST_URL
+      - $TARGET_TASK_NAME == "bump-chrome-version-scheduled" && $PULL_REQUEST_URL
   script:
     - 'MESSAGE_TEXT=":chrome: [*$CI_PROJECT_NAME*] New Chrome version available on <$PULL_REQUEST_URL|PR>."'
     - postmessage "#test-notifications" "$MESSAGE_TEXT"

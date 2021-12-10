@@ -13,7 +13,7 @@ const {
 
 const CI_FILE = '.gitlab-ci.yml'
 const REPOSITORY = process.env.GIT_REPOSITORY
-const MAIN_BRANCH = process.env.MAIN_BRANCH
+const MAIN_BRANCH = 'aymeric/bump-chrome-version-check-PR-already-exist'
 const CURRENT_CI_IMAGE = process.env.CURRENT_CI_IMAGE
 
 const CURRENT_PACKAGE_VERSION = process.env.CHROME_PACKAGE_VERSION
@@ -37,7 +37,7 @@ async function main() {
   const driverVersion = await getDriverVersion(majorPackageVersion)
 
   if (majorPackageVersion !== getMajor(driverVersion)) {
-    printError(`No driver available for chrome ${packageVersion}.`)
+    printLog(`No driver available for chrome ${packageVersion}.`)
     process.exit()
   }
 
@@ -45,7 +45,7 @@ async function main() {
   const commitMessage = `👷 Bump chrome to ${packageVersion}`
 
   if (await executeCommand(`git ls-remote --heads origin ${chromeVersionBranch}`)) {
-    printError(`The branch ${chromeVersionBranch} already exists.`)
+    printLog(`The branch ${chromeVersionBranch} already exists.`)
     process.exit()
   }
 
