@@ -46,6 +46,10 @@ export function createEndpointBuilder(
   }
 
   function buildIntakeUrl(): string {
+    if (proxyUrl) {
+      return `${proxyUrl}?ddforward`
+    }
+
     const endpoint = build()
     return endpoint.slice(0, endpoint.indexOf('?'))
   }
