@@ -2,7 +2,7 @@ import { BuildEnv } from '../../boot/init'
 import { CookieOptions, getCurrentSite } from '../../browser/cookie'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { display } from '../../tools/display'
-import { isPercentage, objectHasValue, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
+import { isPercentage, ONE_KILO_BYTE, ONE_SECOND } from '../../tools/utils'
 import { updateExperimentalFeatures } from './experimentalFeatures'
 import { computeTransportConfiguration, TransportConfiguration } from './transportConfiguration'
 
@@ -14,16 +14,10 @@ export const DefaultPrivacyLevel = {
 export type DefaultPrivacyLevel = typeof DefaultPrivacyLevel[keyof typeof DefaultPrivacyLevel]
 
 export const DEFAULT_CONFIGURATION = {
-  allowedTracingOrigins: [] as Array<string | RegExp>,
   maxErrorsPerMinute: 3000,
-  maxActionsPerMinute: 3000,
   maxInternalMonitoringMessagesPerPage: 15,
   sampleRate: 100,
-  replaySampleRate: 100,
   silentMultipleInit: false,
-  trackInteractions: false,
-  trackViewsManually: false,
-  defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT as DefaultPrivacyLevel,
 
   /**
    * arbitrary value, byte precision not needed
@@ -96,8 +90,6 @@ export type Configuration = typeof DEFAULT_CONFIGURATION &
 
     service: string | undefined
     beforeSend: BeforeSendCallback | undefined
-
-    actionNameAttribute?: string
   }
 
 export function validateAndBuildConfiguration(
@@ -127,47 +119,6 @@ export function validateAndBuildConfiguration(
       return
     }
     configuration.sampleRate = initConfiguration.sampleRate
-  }
-
-  return configuration
-}
-
-export function buildConfiguration(initConfiguration: InitConfiguration, buildEnv: BuildEnv): Configuration {
-  const configuration: Configuration = {
-    beforeSend:
-      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    cookieOptions: buildCookieOptions(initConfiguration),
-    service: initConfiguration.service,
-    ...computeTransportConfiguration(initConfiguration, buildEnv),
-    ...DEFAULT_CONFIGURATION,
-  }
-
-  if ('allowedTracingOrigins' in initConfiguration) {
-    configuration.allowedTracingOrigins = initConfiguration.allowedTracingOrigins!
-  }
-
-  if ('sampleRate' in initConfiguration) {
-    configuration.sampleRate = initConfiguration.sampleRate!
-  }
-
-  if ('replaySampleRate' in initConfiguration) {
-    configuration.replaySampleRate = initConfiguration.replaySampleRate!
-  }
-
-  if ('trackInteractions' in initConfiguration) {
-    configuration.trackInteractions = !!initConfiguration.trackInteractions
-  }
-
-  if ('trackViewsManually' in initConfiguration) {
-    configuration.trackViewsManually = !!initConfiguration.trackViewsManually
-  }
-
-  if ('actionNameAttribute' in initConfiguration) {
-    configuration.actionNameAttribute = initConfiguration.actionNameAttribute
-  }
-
-  if (objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)) {
-    configuration.defaultPrivacyLevel = initConfiguration.defaultPrivacyLevel
   }
 
   return configuration

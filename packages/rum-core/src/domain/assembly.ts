@@ -1,6 +1,5 @@
 import {
   combine,
-  Configuration,
   Context,
   isEmptyObject,
   limitModification,
@@ -32,6 +31,7 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { ParentContexts } from './parentContexts'
 import { RumSessionManager, RumSessionPlan } from './rumSessionManager'
 import { UrlContexts } from './urlContexts'
+import { RumConfiguration } from './configuration'
 
 enum SessionType {
   SYNTHETICS = 'synthetics',
@@ -59,8 +59,7 @@ const OTHER_EVENTS_MODIFIABLE_FIELD_PATHS = [
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
 export function startRumAssembly(
-  applicationId: string,
-  configuration: Configuration,
+  configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
   parentContexts: ParentContexts,
@@ -98,7 +97,7 @@ export function startRumAssembly(
             browser_sdk_version: canUseEventBridge() ? buildEnv.sdkVersion : undefined,
           },
           application: {
-            id: applicationId,
+            id: configuration.applicationId,
           },
           date: timeStampNow(),
           service: configuration.service,
