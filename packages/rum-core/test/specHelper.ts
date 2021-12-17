@@ -25,7 +25,7 @@ import {
   SYNTHETICS_RESULT_ID_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
 } from '../src/domain/syntheticsContext'
-import { DEFAULT_RUM_CONFIGURATION, RumConfiguration } from '../src/domain/configuration'
+import { validateAndBuildRumConfiguration, RumConfiguration, RumInitConfiguration } from '../src/domain/configuration'
 import { validateFormat } from './formatValidation'
 import { createRumSessionManagerMock } from './mockRumSessionManager'
 
@@ -92,10 +92,15 @@ export function setup(): TestSetupBuilder {
     selectInForegroundPeriodsFor: () => undefined,
     stop: noop,
   }
+  const DEFAULT_INIT_CONFIGURATION = {
+    applicationId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    clientToken: 'token',
+  }
+
   const FAKE_APP_ID = 'appId'
   const configuration: Partial<RumConfiguration> = {
     ...DEFAULT_CONFIGURATION,
-    ...DEFAULT_RUM_CONFIGURATION,
+    ...validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION as RumInitConfiguration),
     ...SPEC_ENDPOINTS,
     applicationId: FAKE_APP_ID,
   }
