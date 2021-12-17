@@ -183,14 +183,19 @@ describe('getNodeSelfPrivacyLevel', () => {
       expected: undefined,
     },
 
-    // Other
+    // Ignored elements
     {
       msg: 'should be ignored',
       html: '<script>',
       expected: NodePrivacyLevel.IGNORE,
     },
+    {
+      msg: 'should be ignored but has an ALLOW privacy class',
+      html: '<script class="dd-privacy-allow">',
+      expected: NodePrivacyLevel.ALLOW,
+    },
 
-    // Priority
+    // Precedence
     {
       msg: 'has an ALLOW privacy class and a MASK privacy attribute (attribute takes precedence)',
       html: '<span data-dd-privacy="mask" class="dd-privacy-allow">',
@@ -204,11 +209,6 @@ describe('getNodeSelfPrivacyLevel', () => {
     {
       msg: 'has ALLOW and HIDDEN privacy classes (ALLOW takes precedence)',
       html: '<span class="dd-privacy-allow dd-privacy-hidden">',
-      expected: NodePrivacyLevel.ALLOW,
-    },
-    {
-      msg: 'should be ignored but has an ALLOW privacy class',
-      html: '<script class="dd-privacy-allow">',
       expected: NodePrivacyLevel.ALLOW,
     },
   ].forEach(({ msg, html, expected }) => {
