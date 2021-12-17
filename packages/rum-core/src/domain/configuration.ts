@@ -1,5 +1,4 @@
 import {
-  Configuration,
   DefaultPrivacyLevel,
   display,
   InitConfiguration,
@@ -19,28 +18,16 @@ export interface RumInitConfiguration extends InitConfiguration {
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
-export const DEFAULT_RUM_CONFIGURATION = {
-  maxActionsPerMinute: 3000,
+export type RumConfiguration = NonNullable<ReturnType<typeof validateAndBuildRumConfiguration>>
 
-  replaySampleRate: 100,
-  allowedTracingOrigins: [] as Array<RegExp | string>,
-  trackInteractions: false,
-  trackViewsManually: false,
-  defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT as DefaultPrivacyLevel,
-}
-
-export type RumConfiguration = Configuration &
-  typeof DEFAULT_RUM_CONFIGURATION & {
-    applicationId: string
-
-    actionNameAttribute: string | undefined
-  }
-
-export function validateAndBuildRumConfiguration(
-  initConfiguration: RumInitConfiguration
-): RumConfiguration | undefined {
+export function validateAndBuildRumConfiguration(initConfiguration: RumInitConfiguration) {
   if (!initConfiguration.applicationId) {
     display.error('Application ID is not configured, no RUM data will be collected.')
+    return
+  }
+
+  if (initConfiguration.replaySampleRate !== undefined && !isPercentage(initConfiguration.replaySampleRate)) {
+    display.error('Replay Sample Rate should be a number between 0 and 100')
     return
   }
 
@@ -49,44 +36,28 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const configuration: RumConfiguration = {
-    ...baseConfiguration,
-    ...DEFAULT_RUM_CONFIGURATION,
-    applicationId: initConfiguration.applicationId,
-    actionNameAttribute: initConfiguration.actionNameAttribute,
-  }
-
-  if (initConfiguration.replaySampleRate !== undefined) {
-    if (!isPercentage(initConfiguration.replaySampleRate)) {
-      display.error('Replay Sample Rate should be a number between 0 and 100')
-      return
-    }
-    configuration.replaySampleRate = initConfiguration.replaySampleRate
-  }
-
   if (initConfiguration.allowedTracingOrigins !== undefined) {
     if (!Array.isArray(initConfiguration.allowedTracingOrigins)) {
       display.error('Allowed Tracing Origins should be an array')
       return
     }
-    if (initConfiguration.allowedTracingOrigins.length !== 0 && configuration.service === undefined) {
+    if (initConfiguration.allowedTracingOrigins.length !== 0 && baseConfiguration.service === undefined) {
       display.error('Service need to be configured when tracing is enabled')
       return
     }
-    configuration.allowedTracingOrigins = initConfiguration.allowedTracingOrigins
   }
 
-  if (initConfiguration.trackInteractions !== undefined) {
-    configuration.trackInteractions = !!initConfiguration.trackInteractions
+  return {
+    ...baseConfiguration,
+    maxActionsPerMinute: 3000,
+    applicationId: initConfiguration.applicationId,
+    actionNameAttribute: initConfiguration.actionNameAttribute,
+    replaySampleRate: initConfiguration.replaySampleRate ?? 100,
+    allowedTracingOrigins: initConfiguration.allowedTracingOrigins ?? ([] as Array<RegExp | string>),
+    trackInteractions: !!initConfiguration.trackInteractions,
+    trackViewsManually: !!initConfiguration.trackViewsManually,
+    defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
+      ? initConfiguration.defaultPrivacyLevel
+      : (DefaultPrivacyLevel.MASK_USER_INPUT as DefaultPrivacyLevel),
   }
-
-  if (initConfiguration.trackViewsManually !== undefined) {
-    configuration.trackViewsManually = !!initConfiguration.trackViewsManually
-  }
-
-  if (objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)) {
-    configuration.defaultPrivacyLevel = initConfiguration.defaultPrivacyLevel
-  }
-
-  return configuration
 }
