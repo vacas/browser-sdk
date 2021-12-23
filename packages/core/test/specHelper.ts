@@ -1,5 +1,7 @@
-import { buildUrl, EndpointBuilder, instrumentMethod } from '@datadog/browser-core'
+import { EndpointBuilder } from '../src/domain/configuration/endpointBuilder'
+import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
+import { buildUrl } from '../src/tools/urlPolyfill'
 import { noop, objectEntries, assign } from '../src/tools/utils'
 import { BrowserWindow } from '../src/transport/eventBridge'
 
@@ -322,5 +324,29 @@ export function disableJasmineUncaughtErrorHandler() {
   const { stop } = instrumentMethod(window, 'onerror', () => noop)
   return {
     reset: stop,
+  }
+}
+
+export function stubCookie() {
+  let cookie = ''
+  const doc = {
+    getCookie: () => cookie,
+    setCookie: (newCookie: string) => {
+      cookie = newCookie
+    },
+  }
+  const setSpy = spyOn(doc, 'setCookie').and.callThrough()
+  const getSpy = spyOn(doc, 'getCookie').and.callThrough()
+  Object.defineProperty(document, 'cookie', {
+    configurable: true,
+    get: () => doc.getCookie(),
+    set: (cookie) => doc.setCookie(cookie),
+  })
+  return {
+    stop: () => {
+      delete (document as any).cookie
+    },
+    setSpy,
+    getSpy,
   }
 }
