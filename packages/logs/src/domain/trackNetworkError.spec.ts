@@ -138,6 +138,12 @@ describe('computeResponseData', () => {
   })
 
   describe('from Response objects', () => {
+    beforeEach(() => {
+      if (isIE()) {
+        pending('IE does not support the fetch API')
+      }
+    })
+
     it('computes response text from Response objects', (done) => {
       computeResponseData({ response: new ResponseStub({ responseText: 'foo' }) }, CONFIGURATION, (responseData) => {
         expect(responseData).toBe('foo')
