@@ -3,7 +3,6 @@ import { getCookie, setCookie } from '../../browser/cookie'
 import * as utils from '../../tools/utils'
 import { isExperimentalFeatureEnabled } from '../configuration'
 import { monitor, addMonitoringMessage } from '../internalMonitoring'
-import { timeStampNow } from '../../tools/timeUtils'
 import type { SessionState } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY } from './sessionStore'
 
@@ -18,7 +17,7 @@ export const MAX_NUMBER_OF_LOCK_RETRIES = 100
 
 type Operations = {
   options: CookieOptions
-  audit?: Audit
+  audit?: AuditBehavior
   phase?: string
   process: (cookieSession: SessionState) => SessionState | undefined
   after?: (cookieSession: SessionState) => void
@@ -165,6 +164,11 @@ function clearSession(options: CookieOptions) {
 
 const MAX_AUDIT_ENTRIES = 50
 
+export interface AuditBehavior {
+  addRead: Audit['addRead']
+  addWrite: Audit['addWrite']
+}
+
 export class Audit {
   constructor(private productKey: string, private entries: string[]) {}
 
@@ -178,12 +182,10 @@ export class Audit {
 
   private addEntry(phase: string, operation: string, session: SessionState) {
     if (this.entries.length < MAX_AUDIT_ENTRIES) {
-      const currentDate = new Date(timeStampNow())
-      this.entries.push(
-        `${currentDate.toLocaleTimeString()}.${currentDate.getMilliseconds()} - ${
-          this.productKey
-        } ${phase} ${operation} ${toSessionString(session)}`
-      )
+      const currentDate = new Date()
+      // hh:mm:ss.xxx in the browser timezone
+      const formattedTime = `${currentDate.toTimeString().substr(0, 8)}.${currentDate.getMilliseconds()}`
+      this.entries.push(`${formattedTime} - ${this.productKey} ${phase} ${operation} ${toSessionString(session)}`)
     }
   }
 }
