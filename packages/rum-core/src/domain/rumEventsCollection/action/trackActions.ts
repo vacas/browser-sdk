@@ -1,5 +1,6 @@
 import type { Context, Duration, ClocksState, Observable } from '@datadog/browser-core'
 import { addEventListener, DOM_EVENT, generateUUID, clocksNow, ONE_SECOND } from '@datadog/browser-core'
+
 import { ActionType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -61,6 +62,7 @@ export function trackActions(
       if (!(event.target instanceof Element)) {
         return
       }
+
       const name = getActionNameFromElement(event.target, actionNameAttribute)
       if (!name) {
         return
