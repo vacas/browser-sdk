@@ -8,6 +8,7 @@ import {
   DOM_EVENT,
   ONE_SECOND,
   Observable,
+  elapsed,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../../lifeCycle'
@@ -114,7 +115,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
               startClocks,
               hadActivity: event.hadActivity,
               hadError,
-              duration: event.hadActivity ? event.duration : (0 as Duration),
+              duration: event.hadActivity ? elapsed(startClocks.timeStamp, event.end) : (0 as Duration),
               focusChange,
               selectionChange,
             })
