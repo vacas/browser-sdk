@@ -1,4 +1,10 @@
 import type { EndpointBuilder } from '../src/domain/configuration'
+import type {
+  BrowserWindow,
+  BrowserReport,
+  ReportingObserver,
+  BrowserReportType,
+} from '../src/domain/report/reportObservable'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
@@ -410,4 +416,73 @@ export function stubCookie() {
       cookie = newCookie
     },
   }
+}
+
+export function stubReportingObserver() {
+  const originalReportingObserver = (window as BrowserWindow).ReportingObserver
+  let callbacks: Array<(reports: BrowserReport[]) => void> = []
+
+  ;(window as BrowserWindow).ReportingObserver = function (callback: (reports: BrowserReport[]) => void) {
+    callbacks.push(callback)
+    return {
+      disconnect() {
+        noop()
+      },
+      observe() {
+        noop()
+      },
+      takeRecords() {
+        noop()
+      },
+    }
+  } as unknown as ReportingObserver
+
+  return {
+    raiseReport(type: BrowserReportType) {
+      callbacks.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
+    },
+    reset() {
+      ;(window as BrowserWindow).ReportingObserver = originalReportingObserver
+      callbacks = []
+    },
+  }
+}
+
+export function stubCspEventListener() {
+  spyOn(document, 'addEventListener').and.callFake((_type: string, listener: EventListener) => {
+    listeners.push(listener)
+  })
+
+  const listeners: EventListener[] = []
+
+  return {
+    dispatchEvent() {
+      listeners.forEach((listener) => listener(FAKE_CSP_VIOLATION_EVENT))
+    },
+  }
+}
+
+export const FAKE_CSP_VIOLATION_EVENT = {
+  blockedURI: 'blob',
+  columnNumber: 8,
+  documentURI: 'blob',
+  effectiveDirective: 'worker-src',
+  lineNumber: 17,
+  originalPolicy: "worker-src 'none'",
+  referrer: '',
+  sourceFile: 'http://foo.bar/index.js',
+  statusCode: 200,
+  violatedDirective: 'worker-src',
+} as SecurityPolicyViolationEvent
+
+export const FAKE_REPORT: BrowserReport = {
+  type: 'intervention',
+  url: 'http://foo.bar',
+  body: {
+    id: 'NavigatorVibrate',
+    columnNumber: 10,
+    lineNumber: 20,
+    message: 'foo bar',
+    sourceFile: 'http://foo.bar/index.js',
+  },
 }
