@@ -1,4 +1,4 @@
-import type { Context, InternalMonitoring, RawError, RelativeTime } from '@datadog/browser-core'
+import type { Context, InternalMonitoring, RawError, RelativeTime, Report } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
@@ -10,6 +10,9 @@ import {
   getEventBridge,
   getRelativeTime,
   startInternalMonitoring,
+  ReportType,
+  ErrorSource,
+  initReportObservable,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -18,6 +21,13 @@ import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startLoggerBatch } from '../transport/startLoggerBatch'
 import type { LogsConfiguration } from '../domain/configuration'
+import type { LogsEvent } from '../logsEvent.types'
+
+const LogStatusForReport = {
+  [ReportType.csp_violation]: StatusType.error,
+  [ReportType.intervention]: StatusType.error,
+  [ReportType.deprecation]: StatusType.warn,
+}
 
 export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
@@ -30,17 +40,20 @@ export function startLogs(configuration: LogsConfiguration, errorLogger: Logger)
     trackNetworkError(configuration, errorObservable)
   }
 
+  const reportObservable = initReportObservable(['intervention', 'deprecation', 'csp_violation'])
+
   const session =
     areCookiesAuthorized(configuration.cookieOptions) && !canUseEventBridge()
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, errorObservable, internalMonitoring, session, errorLogger)
+  return doStartLogs(configuration, errorObservable, reportObservable, internalMonitoring, session, errorLogger)
 }
 
 export function doStartLogs(
   configuration: LogsConfiguration,
   errorObservable: Observable<RawError>,
+  reportObservable: Observable<Report>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
   errorLogger: Logger
@@ -51,7 +64,7 @@ export function doStartLogs(
     })
   )
 
-  const assemble = buildAssemble(sessionManager, configuration, reportError)
+  const assemble = buildAssemble(sessionManager, configuration, logError)
 
   let onLogEventCollected: (message: Context) => void
   if (canUseEventBridge()) {
@@ -62,7 +75,7 @@ export function doStartLogs(
     onLogEventCollected = (message) => batch.add(message)
   }
 
-  function reportError(error: RawError) {
+  function logError(error: RawError) {
     errorLogger.error(
       error.message,
       combine(
@@ -86,7 +99,23 @@ export function doStartLogs(
       )
     )
   }
-  errorObservable.subscribe(reportError)
+
+  function logReport(report: Report) {
+    let messageContext: Partial<LogsEvent> | undefined
+    const logStatus = LogStatusForReport[report.type]
+    if (logStatus === StatusType.error) {
+      messageContext = {
+        error: {
+          origin: ErrorSource.REPORT,
+          stack: report.stack,
+        },
+      }
+    }
+    errorLogger.log(report.message, messageContext, logStatus)
+  }
+
+  reportObservable.subscribe(logReport)
+  errorObservable.subscribe(logError)
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)

@@ -1,4 +1,4 @@
-import type { Context, RawError, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Context, RawError, RelativeTime, Report, TimeStamp } from '@datadog/browser-core'
 import {
   ErrorSource,
   noop,
@@ -61,6 +61,8 @@ describe('logs', () => {
   let sessionIsTracked: boolean
   let server: sinon.SinonFakeServer
   let errorObservable: Observable<RawError>
+  let reportObservable: Observable<Report>
+
   const sessionManager: LogsSessionManager = {
     findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
   }
@@ -69,12 +71,21 @@ describe('logs', () => {
     configuration: configurationOverrides,
   }: { errorLogger?: Logger; configuration?: Partial<LogsConfiguration> } = {}) => {
     const configuration = { ...baseConfiguration, ...configurationOverrides }
-    return doStartLogs(configuration, errorObservable, internalMonitoring, sessionManager, errorLogger)
+    return doStartLogs(
+      configuration,
+      errorObservable,
+      reportObservable,
+      internalMonitoring,
+      sessionManager,
+      errorLogger
+    )
   }
 
   beforeEach(() => {
     sessionIsTracked = true
     errorObservable = new Observable<RawError>()
+    reportObservable = new Observable<Report>()
+
     server = sinon.fakeServer.create()
   })
 
