@@ -14,6 +14,7 @@ import { RumEventType } from '../../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { ForegroundContexts } from '../../foregroundContexts'
+import { trackReportError } from './trackReportError'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -26,6 +27,7 @@ export function startErrorCollection(lifeCycle: LifeCycle, foregroundContexts: F
   const errorObservable = new Observable<RawError>()
   trackConsoleError(errorObservable)
   trackRuntimeError(errorObservable)
+  trackReportError(errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
