@@ -1,4 +1,4 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import {
   isExperimentalFeatureEnabled,
   clocksNow,
@@ -11,7 +11,6 @@ import {
   elapsed,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
-
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import { waitIdlePage } from '../../waitIdlePage'
@@ -24,6 +23,7 @@ export interface FrustrationSignal {
   duration: Duration
   event: MouseEvent & { target: Element }
   name: string
+  context?: Context
 }
 
 interface Click {
@@ -31,15 +31,18 @@ interface Click {
   startClocks: ClocksState
   hadActivity: boolean
   hadError: boolean
+  isDrag: boolean
   selectionChange: boolean
   duration: Duration
   focusChange: boolean
+  inputChange: boolean
   name: string
 }
 
 const RAGE_DURATION_WINDOW = ONE_SECOND
 const RAGE_CLICK_MIN_COUNT = 3
 const RAGE_MAX_DISTANCE = 100
+const DRAG_MIN_DISTANCE = 15
 
 export function trackFrustrationSignals(
   lifeCycle: LifeCycle,
@@ -73,12 +76,16 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
     let activeElement: Element | null = null
     let selectionBefore: boolean
     let selectionChange = false
+    let mousedownEvent: MouseEvent
+    let inputChange = false
 
     const { stop: stopMouseDownListener } = addEventListener(
       window,
       DOM_EVENT.MOUSE_DOWN,
-      () => {
+      (event: MouseEvent) => {
+        mousedownEvent = event
         selectionChange = false
+        inputChange = false
         selectionBefore = hasSelection()
         activeElement = document.activeElement
       },
@@ -93,6 +100,15 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
         if (selectionBefore || hasSelection()) {
           selectionChange = true
         }
+      },
+      { capture: true }
+    )
+
+    const { stop: stopInputListener } = addEventListener(
+      window,
+      DOM_EVENT.INPUT,
+      () => {
+        inputChange = true
       },
       { capture: true }
     )
@@ -124,9 +140,11 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
               hadActivity: event.hadActivity,
               hadError,
               duration: event.hadActivity ? elapsed(startClocks.timeStamp, event.end) : (0 as Duration),
+              isDrag: mouseEventDistance(mousedownEvent, clickEvent) > DRAG_MIN_DISTANCE,
               focusChange,
               selectionChange,
               name,
+              inputChange,
             })
           },
           AUTO_ACTION_MAX_DURATION,
@@ -137,6 +155,7 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
     )
 
     return () => {
+      stopInputListener()
       stopMouseDownListener()
       stopSelectionChangeListener()
       stopClickListener()
@@ -148,9 +167,11 @@ function observeClicks(lifeCycle: LifeCycle, domMutationObservable: Observable<v
 function hasSelection() {
   const activeElement = document.activeElement
   if (
-    (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) &&
-    activeElement.selectionStart !== activeElement.selectionEnd
+    (activeElement instanceof HTMLInputElement && activeElement.selectionStart !== null) ||
+    activeElement instanceof HTMLTextAreaElement
   ) {
+    // Return true even if the selection is collapsed, because clicking to move the cursor of a text
+    // input is a valid behavior.
     return true
   }
 
@@ -177,6 +198,7 @@ function collectSignals(clicks: Click[]): FrustrationSignal[] {
         // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
         duration: (lastClick.startClocks.timeStamp - firstClick.startClocks.timeStamp + lastClick.duration) as Duration,
         name: firstClick.name,
+        context: action.context,
       }
       signals.push(signal)
       debug(`🚩 ${signal.type} on "${signal.name}" (duration: ${signal.duration}ms)`)
@@ -197,7 +219,7 @@ enum FirstClicksType {
 type FirstClicksAction =
   | { type: FirstClicksType.WaitForMore }
   | { type: FirstClicksType.Ignore; length: number; reason: string }
-  | { type: FirstClicksType.CreateSignal; length: number; signalType: FrustrationSignal['type'] }
+  | { type: FirstClicksType.CreateSignal; length: number; signalType: FrustrationSignal['type']; context?: Context }
 
 function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
   const clickChain = getClickChain(clicks)
@@ -221,6 +243,10 @@ function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
       type: FirstClicksType.CreateSignal,
       signalType: 'rage click',
       length: clickChain.clicks.length,
+      context: {
+        same_target: clickChain.clicks.every((click) => clickChain.clicks[0].event.target === click.event.target),
+        count: clickChain.clicks.length,
+      },
     }
   }
 
@@ -242,11 +268,27 @@ function inspectFirstClicks(clicks: readonly Click[]): FirstClicksAction {
     }
   }
 
+  if (firstClick.inputChange) {
+    return {
+      type: FirstClicksType.Ignore,
+      length: 1,
+      reason: 'input change',
+    }
+  }
+
   if (firstClick.focusChange) {
     return {
       type: FirstClicksType.Ignore,
       length: 1,
       reason: 'focus change',
+    }
+  }
+
+  if (firstClick.isDrag) {
+    return {
+      type: FirstClicksType.Ignore,
+      length: 1,
+      reason: 'drag and drop',
     }
   }
 
@@ -280,16 +322,14 @@ function getClickChain(clicks: readonly Click[]): ClickChain {
 function areClicksSimilar(first: Click, second: Click) {
   return (
     first === second ||
-    // Same target
-    (first.event.target === first.event.target &&
-      // Similar position
-      clickDistance(first.event, second.event) < RAGE_MAX_DISTANCE &&
+    // Similar position
+    (mouseEventDistance(first.event, second.event) < RAGE_MAX_DISTANCE &&
       // Similar time
       first.startClocks.timeStamp - second.startClocks.timeStamp <= RAGE_DURATION_WINDOW)
   )
 }
 
-function clickDistance(origin: MouseEvent, other: MouseEvent) {
+function mouseEventDistance(origin: MouseEvent, other: MouseEvent) {
   return Math.sqrt(Math.pow(origin.clientX - other.clientX, 2) + Math.pow(origin.clientY - other.clientY, 2))
 }
 
