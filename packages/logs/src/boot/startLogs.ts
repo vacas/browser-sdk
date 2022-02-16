@@ -1,18 +1,26 @@
-import type { Context, InternalMonitoring, RawError, RelativeTime, CustomReport } from '@datadog/browser-core'
+import type {
+  ConsoleLog,
+  Context,
+  InternalMonitoring,
+  RawError,
+  RelativeTime,
+  CustomReport,
+} from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
   createEventRateLimiter,
   Observable,
   trackRuntimeError,
-  trackConsoleError,
   canUseEventBridge,
   getEventBridge,
   getRelativeTime,
   startInternalMonitoring,
   CustomReportType,
-  ErrorSource,
   initReportObservable,
+  initConsoleObservable,
+  ConsoleApiName,
+  ErrorSource,
 } from '@datadog/browser-core'
 import { trackNetworkError } from '../domain/trackNetworkError'
 import type { Logger, LogsMessage } from '../domain/logger'
@@ -29,16 +37,24 @@ const LogStatusForReport = {
   [CustomReportType.deprecation]: StatusType.warn,
 }
 
-export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
+const LogStatusForApi = {
+  [ConsoleApiName.log]: StatusType.info,
+  [ConsoleApiName.debug]: StatusType.debug,
+  [ConsoleApiName.info]: StatusType.info,
+  [ConsoleApiName.warn]: StatusType.warn,
+  [ConsoleApiName.error]: StatusType.error,
+}
+
+export function startLogs(configuration: LogsConfiguration, logger: Logger) {
   const internalMonitoring = startInternalMonitoring(configuration)
 
-  const errorObservable = new Observable<RawError>()
+  const rawErrorObservable = new Observable<RawError>()
 
   if (configuration.forwardErrorsToLogs) {
-    trackConsoleError(errorObservable)
-    trackRuntimeError(errorObservable)
-    trackNetworkError(configuration, errorObservable)
+    trackRuntimeError(rawErrorObservable)
+    trackNetworkError(configuration, rawErrorObservable)
   }
+  const consoleObservable = initConsoleObservable(configuration.forwardConsoleLogs)
 
   const reportObservable = initReportObservable(['intervention', 'deprecation', 'csp_violation'])
 
@@ -47,16 +63,25 @@ export function startLogs(configuration: LogsConfiguration, errorLogger: Logger)
       ? startLogsSessionManager(configuration)
       : startLogsSessionManagerStub(configuration)
 
-  return doStartLogs(configuration, errorObservable, reportObservable, internalMonitoring, session, errorLogger)
+  return doStartLogs(
+    configuration,
+    rawErrorObservable,
+    consoleObservable,
+    reportObservable,
+    internalMonitoring,
+    session,
+    logger
+  )
 }
 
 export function doStartLogs(
   configuration: LogsConfiguration,
-  errorObservable: Observable<RawError>,
+  rawErrorObservable: Observable<RawError>,
+  consoleObservable: Observable<ConsoleLog>,
   reportObservable: Observable<CustomReport>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
-  errorLogger: Logger
+  logger: Logger
 ) {
   internalMonitoring.setExternalContextProvider(() =>
     combine({ session_id: sessionManager.findTrackedSession()?.id }, getRUMInternalContext(), {
@@ -64,7 +89,7 @@ export function doStartLogs(
     })
   )
 
-  const assemble = buildAssemble(sessionManager, configuration, logError)
+  const assemble = buildAssemble(sessionManager, configuration, reportRawError)
 
   let onLogEventCollected: (message: Context) => void
   if (canUseEventBridge()) {
@@ -75,29 +100,36 @@ export function doStartLogs(
     onLogEventCollected = (message) => batch.add(message)
   }
 
-  function logError(error: RawError) {
-    errorLogger.error(
-      error.message,
-      combine(
-        {
-          date: error.startClocks.timeStamp,
-          error: {
-            kind: error.type,
-            origin: error.source,
-            stack: error.stack,
-          },
+  function reportRawError(error: RawError) {
+    const messageContext: Partial<LogsEvent> = {
+      date: error.startClocks.timeStamp,
+      error: {
+        kind: error.type,
+        origin: error.source,
+        stack: error.stack,
+      },
+    }
+    if (error.resource) {
+      messageContext.http = {
+        method: error.resource.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
+        status_code: error.resource.statusCode,
+        url: error.resource.url,
+      }
+    }
+    logger.error(error.message, messageContext)
+  }
+
+  function reportConsoleLog(log: ConsoleLog) {
+    let messageContext: Partial<LogsEvent> | undefined
+    if (log.api === ConsoleApiName.error) {
+      messageContext = {
+        error: {
+          origin: ErrorSource.CONSOLE,
+          stack: log.stack,
         },
-        error.resource
-          ? {
-              http: {
-                method: error.resource.method,
-                status_code: error.resource.statusCode,
-                url: error.resource.url,
-              },
-            }
-          : undefined
-      )
-    )
+      }
+    }
+    logger.log(log.message, messageContext, LogStatusForApi[log.api])
   }
 
   function logReport(report: CustomReport) {
@@ -111,11 +143,12 @@ export function doStartLogs(
         },
       }
     }
-    errorLogger.log(report.message, messageContext, logStatus)
+    logger.log(report.message, messageContext, logStatus)
   }
 
+  rawErrorObservable.subscribe(reportRawError)
+  consoleObservable.subscribe(reportConsoleLog)
   reportObservable.subscribe(logReport)
-  errorObservable.subscribe(logError)
 
   return (message: LogsMessage, currentContext: Context) => {
     const contextualizedMessage = assemble(message, currentContext)
@@ -128,14 +161,22 @@ export function doStartLogs(
 export function buildAssemble(
   sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
-  reportError: (error: RawError) => void
+  reportRawError: (error: RawError) => void
 ) {
   const logRateLimiters = {
-    [StatusType.error]: createEventRateLimiter(StatusType.error, configuration.eventRateLimiterThreshold, reportError),
-    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.eventRateLimiterThreshold, reportError),
-    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.eventRateLimiterThreshold, reportError),
-    [StatusType.debug]: createEventRateLimiter(StatusType.debug, configuration.eventRateLimiterThreshold, reportError),
-    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportError),
+    [StatusType.error]: createEventRateLimiter(
+      StatusType.error,
+      configuration.eventRateLimiterThreshold,
+      reportRawError
+    ),
+    [StatusType.warn]: createEventRateLimiter(StatusType.warn, configuration.eventRateLimiterThreshold, reportRawError),
+    [StatusType.info]: createEventRateLimiter(StatusType.info, configuration.eventRateLimiterThreshold, reportRawError),
+    [StatusType.debug]: createEventRateLimiter(
+      StatusType.debug,
+      configuration.eventRateLimiterThreshold,
+      reportRawError
+    ),
+    ['custom']: createEventRateLimiter('custom', configuration.eventRateLimiterThreshold, reportRawError),
   }
 
   return (message: LogsMessage, currentContext: Context) => {

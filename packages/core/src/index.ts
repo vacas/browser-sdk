@@ -9,7 +9,6 @@ export {
   updateExperimentalFeatures,
   resetExperimentalFeatures,
 } from './domain/configuration'
-export { trackConsoleError } from './domain/error/trackConsoleError'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export { computeStackTrace, StackTrace } from './domain/tracekit'
 export { initReportObservable, CustomReport, CustomReportType } from './domain/report/reportObservable'
@@ -57,6 +56,7 @@ export { Context, ContextArray, ContextValue } from './tools/context'
 export { areCookiesAuthorized, getCookie, setCookie, deleteCookie, COOKIE_ACCESS_DELAY } from './browser/cookie'
 export { initXhrObservable, XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initFetchObservable, FetchCompleteContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
+export { initConsoleObservable, ConsoleLog, ConsoleApiName } from './domain/console/consoleObservable'
 export { BoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export { createContextManager } from './tools/contextManager'
