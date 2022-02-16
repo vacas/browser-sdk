@@ -1,4 +1,4 @@
-import type { Context, InternalMonitoring, RawError, RelativeTime, Report } from '@datadog/browser-core'
+import type { Context, InternalMonitoring, RawError, RelativeTime, CustomReport } from '@datadog/browser-core'
 import {
   areCookiesAuthorized,
   combine,
@@ -10,7 +10,7 @@ import {
   getEventBridge,
   getRelativeTime,
   startInternalMonitoring,
-  ReportType,
+  CustomReportType,
   ErrorSource,
   initReportObservable,
 } from '@datadog/browser-core'
@@ -24,9 +24,9 @@ import type { LogsConfiguration } from '../domain/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 
 const LogStatusForReport = {
-  [ReportType.csp_violation]: StatusType.error,
-  [ReportType.intervention]: StatusType.error,
-  [ReportType.deprecation]: StatusType.warn,
+  [CustomReportType.csp_violation]: StatusType.error,
+  [CustomReportType.intervention]: StatusType.error,
+  [CustomReportType.deprecation]: StatusType.warn,
 }
 
 export function startLogs(configuration: LogsConfiguration, errorLogger: Logger) {
@@ -53,7 +53,7 @@ export function startLogs(configuration: LogsConfiguration, errorLogger: Logger)
 export function doStartLogs(
   configuration: LogsConfiguration,
   errorObservable: Observable<RawError>,
-  reportObservable: Observable<Report>,
+  reportObservable: Observable<CustomReport>,
   internalMonitoring: InternalMonitoring,
   sessionManager: LogsSessionManager,
   errorLogger: Logger
@@ -100,7 +100,7 @@ export function doStartLogs(
     )
   }
 
-  function logReport(report: Report) {
+  function logReport(report: CustomReport) {
     let messageContext: Partial<LogsEvent> | undefined
     const logStatus = LogStatusForReport[report.type]
     if (logStatus === StatusType.error) {

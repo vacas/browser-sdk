@@ -1,90 +1,45 @@
 import { mergeObservables, Observable } from '../../tools/observable'
 import { DOM_EVENT, includes, addEventListener } from '../../tools/utils'
 import { monitor } from '../internalMonitoring'
+import type { Report, BrowserWindow, ReportType } from './browser.types'
 
-export interface BrowserWindow {
-  ReportingObserver?: ReportingObserver
-}
-
-export interface ReportingObserverOption {
-  types: BrowserReportType[]
-  buffered: boolean
-}
-
-interface ReportingObserverCallback {
-  (reports: BrowserReport[], observer: ReportingObserver): void
-}
-
-export declare class ReportingObserver {
-  static readonly supportedEntryTypes: readonly string[]
-  constructor(callback: ReportingObserverCallback, option: ReportingObserverOption)
-  disconnect(): void
-  observe(): void
-  takeRecords(): PerformanceEntryList
-}
-
-export interface BrowserReport {
-  type: BrowserReportType
-  url: string
-  body: DeprecationReportBody | InterventionReportBody
-}
-
-interface DeprecationReportBody {
-  id: string
-  message: string
-  lineNumber: number
-  columnNumber: number
-  sourceFile: string
-  anticipatedRemoval?: Date
-}
-
-interface InterventionReportBody {
-  id: string
-  message: string
-  lineNumber: number
-  columnNumber: number
-  sourceFile: string
-}
-
-export const ReportType = {
+export const CustomReportType = {
   intervention: 'intervention',
   deprecation: 'deprecation',
   csp_violation: 'csp_violation',
 } as const
 
-export type ReportType = typeof ReportType[keyof typeof ReportType]
+export type CustomReportType = typeof CustomReportType[keyof typeof CustomReportType]
 
-export interface Report {
-  type: ReportType
+export interface CustomReport {
+  type: CustomReportType
   message: string
   stack?: string
 }
 
-export type BrowserReportType = 'intervention' | 'deprecation'
+export function initReportObservable(apis: CustomReportType[]) {
+  const observables: Array<Observable<CustomReport>> = []
 
-export function initReportObservable(apis: ReportType[]) {
-  const observables: Array<Observable<Report>> = []
-
-  if (includes(apis, 'csp_violation')) {
+  if (includes(apis, CustomReportType.csp_violation)) {
     observables.push(createCspViolationReportObservable())
   }
 
-  const reportTypes = apis.filter((api: ReportType): api is BrowserReportType => api !== 'csp_violation')
+  const reportTypes = apis.filter((api: CustomReportType): api is ReportType => api !== CustomReportType.csp_violation)
   if (reportTypes.length) {
     observables.push(createReportObservable(reportTypes))
   }
 
-  return mergeObservables<Report>(...observables)
+  return mergeObservables<CustomReport>(...observables)
 }
 
-function createReportObservable(reportTypes: BrowserReportType[]) {
-  const observable = new Observable<Report>(() => {
+function createReportObservable(reportTypes: ReportType[]) {
+  const observable = new Observable<CustomReport>(() => {
     if (!(window as BrowserWindow).ReportingObserver) {
       return
     }
-    const handleReports = monitor((reports: BrowserReport[]) =>
+    const handleReports = monitor((reports: Report[]) =>
       reports.forEach((report) => {
-        observable.notify(buildReportLogFromReport(report))
+        observable.notify(buildCustomReportFromReport(report))
       })
     )
 
@@ -103,9 +58,9 @@ function createReportObservable(reportTypes: BrowserReportType[]) {
 }
 
 function createCspViolationReportObservable() {
-  const observable = new Observable<Report>(() => {
+  const observable = new Observable<CustomReport>(() => {
     const handleCspViolation = monitor((event: SecurityPolicyViolationEvent) => {
-      observable.notify(buildReportLogFromCspViolation(event))
+      observable.notify(buildCustomReportFromCspViolation(event))
     })
 
     const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, handleCspViolation)
@@ -115,18 +70,18 @@ function createCspViolationReportObservable() {
   return observable
 }
 
-function buildReportLogFromReport({
+function buildCustomReportFromReport({
   type,
   body: { id, message, sourceFile, lineNumber, columnNumber },
-}: BrowserReport): Report {
-  const report: Report = { type, message: `${type}: ${message}` }
-  if (type === ReportType.intervention) {
+}: Report): CustomReport {
+  const report: CustomReport = { type, message: `${type}: ${message}` }
+  if (type === CustomReportType.intervention) {
     report.stack = buildStack(id, message, sourceFile, lineNumber, columnNumber)
   }
   return report
 }
 
-function buildReportLogFromCspViolation(event: SecurityPolicyViolationEvent): Report {
+function buildCustomReportFromCspViolation(event: SecurityPolicyViolationEvent): CustomReport {
   const type = 'csp_violation'
   const message = `'${event.blockedURI}' blocked by '${event.effectiveDirective}' directive`
 

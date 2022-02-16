@@ -1,10 +1,5 @@
 import type { EndpointBuilder } from '../src/domain/configuration'
-import type {
-  BrowserWindow,
-  BrowserReport,
-  ReportingObserver,
-  BrowserReportType,
-} from '../src/domain/report/reportObservable'
+import type { ReportType, BrowserWindow, Report } from '../src/domain/report/browser.types'
 import { instrumentMethod } from '../src/tools/instrumentMethod'
 import { resetNavigationStart } from '../src/tools/timeUtils'
 import { buildUrl } from '../src/tools/urlPolyfill'
@@ -420,9 +415,9 @@ export function stubCookie() {
 
 export function stubReportingObserver() {
   const originalReportingObserver = (window as BrowserWindow).ReportingObserver
-  let callbacks: Array<(reports: BrowserReport[]) => void> = []
+  let callbacks: Array<(reports: Report[]) => void> = []
 
-  ;(window as BrowserWindow).ReportingObserver = function (callback: (reports: BrowserReport[]) => void) {
+  ;(window as BrowserWindow).ReportingObserver = function (callback: (reports: Report[]) => void) {
     callbacks.push(callback)
     return {
       disconnect() {
@@ -438,7 +433,7 @@ export function stubReportingObserver() {
   } as unknown as ReportingObserver
 
   return {
-    raiseReport(type: BrowserReportType) {
+    raiseReport(type: ReportType) {
       callbacks.forEach((callback) => callback([{ ...FAKE_REPORT, type }]))
     },
     reset() {
@@ -475,7 +470,7 @@ export const FAKE_CSP_VIOLATION_EVENT = {
   violatedDirective: 'worker-src',
 } as SecurityPolicyViolationEvent
 
-export const FAKE_REPORT: BrowserReport = {
+export const FAKE_REPORT: Report = {
   type: 'intervention',
   url: 'http://foo.bar',
   body: {

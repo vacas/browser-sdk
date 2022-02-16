@@ -1,7 +1,7 @@
 import { isChromium } from '../../tools/browserDetection'
 import type { Subscription } from '../../tools/observable'
 import { stubReportingObserver, stubCspEventListener } from '../../../test/specHelper'
-import { initReportObservable, ReportType } from './reportObservable'
+import { initReportObservable, CustomReportType } from './reportObservable'
 
 describe(`report observable`, () => {
   let reportingObserverStub: { reset(): void; raiseReport(type: string): void }
@@ -23,7 +23,7 @@ describe(`report observable`, () => {
     reportingObserverStub.reset()
     consoleSubscription.unsubscribe()
   })
-  ;[ReportType.deprecation, ReportType.deprecation].forEach((type) => {
+  ;[CustomReportType.deprecation, CustomReportType.deprecation].forEach((type) => {
     it(`should notify ${type} reports`, () => {
       consoleSubscription = initReportObservable([type]).subscribe(notifyReport)
       reportingObserverStub.raiseReport(type)
@@ -39,9 +39,9 @@ describe(`report observable`, () => {
     })
   })
 
-  it(`should compute stack for ${ReportType.intervention}`, () => {
-    consoleSubscription = initReportObservable([ReportType.intervention]).subscribe(notifyReport)
-    reportingObserverStub.raiseReport(ReportType.intervention)
+  it(`should compute stack for ${CustomReportType.intervention}`, () => {
+    consoleSubscription = initReportObservable([CustomReportType.intervention]).subscribe(notifyReport)
+    reportingObserverStub.raiseReport(CustomReportType.intervention)
 
     const [report] = notifyReport.calls.mostRecent().args
 
@@ -49,8 +49,8 @@ describe(`report observable`, () => {
 at <anonymous> @ http://foo.bar/index.js:20:10`)
   })
 
-  it(`should notify ${ReportType.csp_violation}`, () => {
-    consoleSubscription = initReportObservable([ReportType.csp_violation]).subscribe(notifyReport)
+  it(`should notify ${CustomReportType.csp_violation}`, () => {
+    consoleSubscription = initReportObservable([CustomReportType.csp_violation]).subscribe(notifyReport)
     cspEventListenerStub.dispatchEvent()
 
     expect(notifyReport).toHaveBeenCalledOnceWith({
